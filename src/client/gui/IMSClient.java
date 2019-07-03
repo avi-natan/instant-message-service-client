@@ -8,21 +8,32 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.JLabel;
 import java.awt.Font;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.JSeparator;
 import javax.swing.border.LineBorder;
 import java.awt.Color;
 import java.awt.Cursor;
 
 import javax.swing.JTextField;
+import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JPasswordField;
+import javax.swing.JPopupMenu;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.JLayeredPane;
+
 import java.awt.CardLayout;
+import javax.swing.JList;
+import javax.swing.JMenuItem;
 
 @SuppressWarnings("serial")
-public class LoginScreen extends JFrame {
+public class IMSClient extends JFrame {
 
 	private JPanel contentPane;
 	private JLayeredPane layeredPane;
@@ -65,7 +76,23 @@ public class LoginScreen extends JFrame {
 			private JTextField p3EmailInput;
 			private JButton p3SendMyPassword;
 		private JLabel p3BackButton;
+	
+	private JPanel panelClient;
+		private JPanel panel_profile;
+			private JLabel user_name_display;
+			private JButton logout_button;
+			private JTextField add_username;
+			private JButton add_button;
+		private JPanel panel_friends;
+			private DefaultListModel<String> friends_list_model;
+			private JList<String> friends_list;
+		private JPanel panel_chat;
+		private JPanel panel_message;
+			private JTextField message_field;
+			private JButton send_button;
 
+			
+	
 	/**
 	 * Launch the application.
 	 */
@@ -73,7 +100,7 @@ public class LoginScreen extends JFrame {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					LoginScreen frame = new LoginScreen();
+					IMSClient frame = new IMSClient();
 					frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -85,7 +112,7 @@ public class LoginScreen extends JFrame {
 	/**
 	 * Create the frame.
 	 */
-	public LoginScreen() {
+	public IMSClient() {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 800, 600);
 		contentPane = new JPanel();
@@ -146,6 +173,11 @@ public class LoginScreen extends JFrame {
 		p1PasswordInput.setFont(new Font("Tahoma", Font.PLAIN, 16));
 		
 		p1LogInButton = new JButton("Log In");
+		p1LogInButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				switchPanels(panelClient);
+			}
+		});
 		p1LogInButton.setBounds(10, 418, 380, 50);
 		panel1.add(p1LogInButton);
 		p1LogInButton.setFont(new Font("Tahoma", Font.PLAIN, 18));
@@ -362,6 +394,7 @@ public class LoginScreen extends JFrame {
 		p3BackButton.setForeground(new Color(30, 144, 255));
 		p3BackButton.setFont(new Font("Tahoma", Font.PLAIN, 16));
 		p3BackButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		
 		p3BackButton.addMouseListener(new MouseAdapter() {
 			 
 		    @Override
@@ -381,11 +414,138 @@ public class LoginScreen extends JFrame {
 		    }
 		});
 		
+		panelClient = new JPanel();
+		layeredPane.add(panelClient, "panelClient");
+		panelClient.setName("panelClient");
+		panelClient.setLayout(null);
+		
+		panel_profile = new JPanel();
+		panel_profile.setBorder(new LineBorder(Color.LIGHT_GRAY));
+		panel_profile.setBounds(510, 0, 274, 98);
+		panelClient.add(panel_profile);
+		panel_profile.setLayout(null);
+		
+		logout_button = new JButton("Logout");
+		logout_button.setBounds(175, 11, 90, 30);
+		logout_button.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				switchPanels(panelLogIn);
+				
+			}
+		});
+		panel_profile.add(logout_button);
+		
+		user_name_display = new JLabel("New label");
+		user_name_display.setHorizontalAlignment(SwingConstants.CENTER);
+		user_name_display.setBounds(10, 11, 137, 30);
+		panel_profile.add(user_name_display);
+		
+		add_button = new JButton("Add");
+		add_button.setBounds(175, 56, 90, 30);
+		add_button.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				addNewFriend();
+			}
+		});
+		add_button.setEnabled(false);
+		panel_profile.add(add_button);
+		
+		add_username = new JTextField();
+		add_username.setBounds(10, 56, 137, 30);
+		add_username.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyReleased(KeyEvent e) {
+				if(add_username.getText().length() == 0) {
+					add_button.setEnabled(false);
+				} else {
+					add_button.setEnabled(true);
+				}
+			}
+		});
+		panel_profile.add(add_username);
+		add_username.setColumns(10);
+		
+		panel_friends = new JPanel();
+		panel_friends.setBorder(new LineBorder(Color.LIGHT_GRAY));
+		panel_friends.setBounds(510, 102, 274, 459);
+		panelClient.add(panel_friends);
+		panel_friends.setLayout(null);
+		
+		friends_list = new JList<String>();
+		friends_list.setBackground(new Color(240, 240, 240));
+		friends_list.setBorder(new LineBorder(Color.LIGHT_GRAY));
+		friends_list.setBounds(0, 0, 274, 459);
+		friends_list_model =  new DefaultListModel<String>();
+		friends_list.setModel(friends_list_model);
+		friends_list.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent e) {
+				if(SwingUtilities.isRightMouseButton(e)) {
+					FriendPopupMenu menu = new FriendPopupMenu(friends_list.locationToIndex(e.getPoint()));
+					menu.show(e.getComponent(), e.getX(), e.getY());
+				}
+			}
+		});
+		panel_friends.add(friends_list);
+		
+		panel_chat = new JPanel();
+		panel_chat.setBorder(new LineBorder(Color.LIGHT_GRAY));
+		panel_chat.setBounds(0, 0, 507, 484);
+		panelClient.add(panel_chat);
+		panel_chat.setLayout(null);
+		
+		panel_message = new JPanel();
+		panel_message.setBorder(new LineBorder(Color.LIGHT_GRAY));
+		panel_message.setBounds(0, 488, 507, 73);
+		panelClient.add(panel_message);
+		panel_message.setLayout(null);
+		
+		message_field = new JTextField();
+		message_field.setBounds(10, 11, 406, 51);
+		panel_message.add(message_field);
+		message_field.setColumns(10);
+		
+		send_button = new JButton("Send");
+		send_button.setBounds(426, 11, 70, 51);
+		panel_message.add(send_button);
+		layeredPane.setName("layeredPane");
+		
 		
 		
 	}
 	
 	public void switchPanels(JPanel panel) {
 		cardlayout.show(layeredPane, panel.getName());
+	}
+	
+	public void addNewFriend() {
+		String text;
+		try {
+			text = add_username.getText();
+		} catch (NullPointerException e) {
+			text = "Unknown";
+		}
+		friends_list_model.add(0, text);
+	}
+	
+	public class FriendPopupMenu extends JPopupMenu {
+		int elementIndex;
+		JMenuItem item;
+		public FriendPopupMenu(int elementIndex) {
+			this.elementIndex = elementIndex;
+			item = new JMenuItem("Remove Friend");
+			item.addActionListener(new ActionListener() {
+				
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					friends_list_model.remove(elementIndex);
+				}
+			});
+			add(item);
+		}
 	}
 }
