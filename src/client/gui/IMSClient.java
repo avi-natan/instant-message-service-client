@@ -1,6 +1,7 @@
 package client.gui;
 
-import java.awt.EventQueue;
+import client.networking.ClientConnection;
+import client.networking.WritableGUI;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -11,8 +12,6 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.JSeparator;
 import javax.swing.border.LineBorder;
-import java.awt.Color;
-import java.awt.Cursor;
 
 import javax.swing.JTextField;
 import javax.swing.DefaultListModel;
@@ -20,20 +19,27 @@ import javax.swing.JButton;
 import javax.swing.JPasswordField;
 import javax.swing.JPopupMenu;
 
+import java.awt.Color;
+import java.awt.EventQueue;
+import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+
 import javax.swing.JLayeredPane;
 
 import java.awt.CardLayout;
 import javax.swing.JList;
 import javax.swing.JMenuItem;
+import javax.swing.JTextArea;
 
 @SuppressWarnings("serial")
-public class IMSClient extends JFrame {
+public class IMSClient extends JFrame implements WritableGUI {
+	
+	private ClientConnection connection;
 
 	private JPanel contentPane;
 	private JLayeredPane layeredPane;
@@ -87,6 +93,7 @@ public class IMSClient extends JFrame {
 			private DefaultListModel<String> friends_list_model;
 			private JList<String> friends_list;
 		private JPanel panel_chat;
+			private JTextArea chat_field;
 		private JPanel panel_message;
 			private JTextField message_field;
 			private JButton send_button;
@@ -160,6 +167,16 @@ public class IMSClient extends JFrame {
 		p1UsernameInput.setFont(new Font("Tahoma", Font.PLAIN, 16));
 		p1UsernameInput.setToolTipText("");
 		p1UsernameInput.setColumns(10);
+		p1UsernameInput.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyReleased(KeyEvent e) {
+				if(p1UsernameInput.getText().length() == 0) {
+					p1LogInButton.setEnabled(false);
+				} else {
+					p1LogInButton.setEnabled(true);
+				}
+			}
+		});
 		
 		p1PasswordLabel = new JLabel("Password");
 		p1PasswordLabel.setBounds(10, 180, 100, 30);
@@ -175,10 +192,11 @@ public class IMSClient extends JFrame {
 		p1LogInButton = new JButton("Log In");
 		p1LogInButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				switchPanels(panelClient);
+				logIn(p1UsernameInput.getText());
 			}
 		});
 		p1LogInButton.setBounds(10, 418, 380, 50);
+		p1LogInButton.setEnabled(false);
 		panel1.add(p1LogInButton);
 		p1LogInButton.setFont(new Font("Tahoma", Font.PLAIN, 18));
 		
@@ -431,7 +449,7 @@ public class IMSClient extends JFrame {
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				switchPanels(panelLogIn);
+				logOut();
 				
 			}
 		});
@@ -498,6 +516,10 @@ public class IMSClient extends JFrame {
 		panelClient.add(panel_chat);
 		panel_chat.setLayout(null);
 		
+		chat_field = new JTextArea();
+		chat_field.setBounds(25, 26, 446, 416);
+		panel_chat.add(chat_field);
+		
 		panel_message = new JPanel();
 		panel_message.setBorder(new LineBorder(Color.LIGHT_GRAY));
 		panel_message.setBounds(0, 488, 507, 73);
@@ -516,6 +538,19 @@ public class IMSClient extends JFrame {
 		
 		
 		
+	}
+	
+	public void logIn(String username) {
+		p1UsernameInput.setText("");
+		user_name_display.setText(username);
+		switchPanels(panelClient);
+		connection = new ClientConnection(this, "localhost", 8877);
+		new Thread(connection).start();
+	}
+	
+	public void logOut() {
+		connection.terminate();
+		switchPanels(panelLogIn);
 	}
 	
 	public void switchPanels(JPanel panel) {
@@ -548,4 +583,9 @@ public class IMSClient extends JFrame {
 			add(item);
 		}
 	}
+	
+	@Override
+    public void write(String s) {
+		chat_field.append(s + System.lineSeparator());
+    }
 }
