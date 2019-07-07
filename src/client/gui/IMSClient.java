@@ -98,7 +98,12 @@ public class IMSClient extends JFrame implements WritableGUI {
 			private JTextField message_field;
 			private JButton send_button;
 
+	
 			
+	private boolean un;
+	private boolean em;
+	private boolean pw;
+	private boolean cpw;
 	
 	/**
 	 * Launch the application.
@@ -285,6 +290,21 @@ public class IMSClient extends JFrame implements WritableGUI {
 		p2UsernameInput.setToolTipText("");
 		p2UsernameInput.setFont(new Font("Tahoma", Font.PLAIN, 16));
 		p2UsernameInput.setColumns(10);
+		p2UsernameInput.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyReleased(KeyEvent e) {
+				if(p2UsernameInput.getText().length() == 0) {
+					un = false;
+				} else {
+					un = true;
+				}
+				if(un && em && pw && cpw) {
+					p2CreateAccountButton.setEnabled(true);
+				} else {
+					p2CreateAccountButton.setEnabled(false);
+				}
+			}
+		});
 		panel2.add(p2UsernameInput);
 		
 		p2EmailLabel = new JLabel("Email");
@@ -298,6 +318,21 @@ public class IMSClient extends JFrame implements WritableGUI {
 		p2EmailInput.setFont(new Font("Tahoma", Font.PLAIN, 16));
 		p2EmailInput.setColumns(10);
 		p2EmailInput.setBounds(10, 210, 380, 30);
+		p2EmailInput.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyReleased(KeyEvent e) {
+				if(p2EmailInput.getText().length() == 0) {
+					em = false;
+				} else {
+					em = true;
+				}
+				if(un && em && pw && cpw) {
+					p2CreateAccountButton.setEnabled(true);
+				} else {
+					p2CreateAccountButton.setEnabled(false);
+				}
+			}
+		});
 		panel2.add(p2EmailInput);
 		
 		p2PasswordLabel = new JLabel("Password");
@@ -309,6 +344,21 @@ public class IMSClient extends JFrame implements WritableGUI {
 		p2PasswordInput = new JPasswordField();
 		p2PasswordInput.setFont(new Font("Tahoma", Font.PLAIN, 16));
 		p2PasswordInput.setBounds(10, 290, 380, 30);
+		p2PasswordInput.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyReleased(KeyEvent e) {
+				if(String.valueOf(p2PasswordInput.getPassword()).length() == 0) {
+					pw = false;
+				} else {
+					pw = true;
+				}
+				if(un && em && pw && cpw) {
+					p2CreateAccountButton.setEnabled(true);
+				} else {
+					p2CreateAccountButton.setEnabled(false);
+				}
+			}
+		});
 		panel2.add(p2PasswordInput);
 		
 		p2ConfirmPasswordLabel = new JLabel("Confirm Password");
@@ -320,11 +370,32 @@ public class IMSClient extends JFrame implements WritableGUI {
 		p2ConfirmPasswordInput = new JPasswordField();
 		p2ConfirmPasswordInput.setFont(new Font("Tahoma", Font.PLAIN, 16));
 		p2ConfirmPasswordInput.setBounds(10, 370, 380, 30);
+		p2ConfirmPasswordInput.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyReleased(KeyEvent e) {
+				if(String.valueOf(p2ConfirmPasswordInput.getPassword()).length() == 0) {
+					cpw = false;
+				} else {
+					cpw = true;
+				}
+				if(un && em && pw && cpw) {
+					p2CreateAccountButton.setEnabled(true);
+				} else {
+					p2CreateAccountButton.setEnabled(false);
+				}
+			}
+		});
 		panel2.add(p2ConfirmPasswordInput);
 		
 		p2CreateAccountButton = new JButton("Create Account");
+		p2CreateAccountButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				createAccount(p2UsernameInput.getText(), p2EmailInput.getText(), String.valueOf(p2PasswordInput.getPassword()), String.valueOf(p2ConfirmPasswordInput.getPassword()));
+			}
+		});
 		p2CreateAccountButton.setFont(new Font("Tahoma", Font.PLAIN, 18));
 		p2CreateAccountButton.setBounds(10, 418, 380, 50);
+		p2CreateAccountButton.setEnabled(false);
 		panel2.add(p2CreateAccountButton);
 		
 		p2BackButton = new JLabel("Back");
@@ -540,11 +611,27 @@ public class IMSClient extends JFrame implements WritableGUI {
 		
 	}
 	
+	public void createAccount(String username, String email, String password, String confirmedPassword) {
+		if(!password.equals(confirmedPassword)) {
+			System.out.println("Password and confirmed password not the same: " + password + ", " + confirmedPassword);
+		} else {
+			System.out.println("creating account: " + username + ", " + email + ", " + password + ", " + confirmedPassword);
+			connection = new ClientConnection(this, username, email, password, "localhost", 8877);
+			boolean status = connection.register();
+			if(status) {
+				user_name_display.setText(username);
+				switchPanels(panelClient);
+			}
+			
+		}
+		
+	}
+
 	public void logIn(String username) {
 		p1UsernameInput.setText("");
 		user_name_display.setText(username);
 		switchPanels(panelClient);
-		connection = new ClientConnection(this, "localhost", 8877);
+		connection = new ClientConnection(this, username, "", "", "localhost", 8877); // TODO
 		new Thread(connection).start();
 	}
 	
