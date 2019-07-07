@@ -197,7 +197,7 @@ public class IMSClient extends JFrame implements WritableGUI {
 		p1LogInButton = new JButton("Log In");
 		p1LogInButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				logIn(p1UsernameInput.getText());
+				logIn(p1UsernameInput.getText(), String.valueOf(p1PasswordInput.getPassword()));
 			}
 		});
 		p1LogInButton.setBounds(10, 418, 380, 50);
@@ -215,18 +215,15 @@ public class IMSClient extends JFrame implements WritableGUI {
 			 
 		    @Override
 		    public void mouseClicked(MouseEvent e) {
-		        System.out.println("p1CreateNewAccountButton mouse click");
 		        switchPanels(panelNewAccount);
 		    }
 		 
 		    @Override
 		    public void mouseEntered(MouseEvent e) {
-		    	System.out.println("p1CreateNewAccountButton mouse enter");
 		    }
 		 
 		    @Override
 		    public void mouseExited(MouseEvent e) {
-		    	System.out.println("p1CreateNewAccountButton mouse exit");
 		    }
 		});
 		
@@ -241,18 +238,15 @@ public class IMSClient extends JFrame implements WritableGUI {
 			 
 		    @Override
 		    public void mouseClicked(MouseEvent e) {
-		        System.out.println("p1ForgotMyPasswordButton mouse click");
 		        switchPanels(panelForgotPassword);
 		    }
 		 
 		    @Override
 		    public void mouseEntered(MouseEvent e) {
-		    	System.out.println("p1ForgotMyPasswordButton mouse enter");
 		    }
 		 
 		    @Override
 		    public void mouseExited(MouseEvent e) {
-		    	System.out.println("p1ForgotMyPasswordButton mouse exit");
 		    }
 		});
 		
@@ -408,18 +402,15 @@ public class IMSClient extends JFrame implements WritableGUI {
 			 
 		    @Override
 		    public void mouseClicked(MouseEvent e) {
-		        System.out.println("p2BackButton mouse click");
 		        switchPanels(panelLogIn);
 		    }
 		 
 		    @Override
 		    public void mouseEntered(MouseEvent e) {
-		    	System.out.println("p2BackButton mouse enter");
 		    }
 		 
 		    @Override
 		    public void mouseExited(MouseEvent e) {
-		    	System.out.println("p2BackButton mouse exit");
 		    }
 		});
 		
@@ -488,18 +479,15 @@ public class IMSClient extends JFrame implements WritableGUI {
 			 
 		    @Override
 		    public void mouseClicked(MouseEvent e) {
-		        System.out.println("p3BackButton mouse click");
 		        switchPanels(panelLogIn);
 		    }
 		 
 		    @Override
 		    public void mouseEntered(MouseEvent e) {
-		    	System.out.println("p3BackButton mouse enter");
 		    }
 		 
 		    @Override
 		    public void mouseExited(MouseEvent e) {
-		    	System.out.println("p3BackButton mouse exit");
 		    }
 		});
 		
@@ -521,7 +509,6 @@ public class IMSClient extends JFrame implements WritableGUI {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				logOut();
-				
 			}
 		});
 		panel_profile.add(logout_button);
@@ -627,12 +614,15 @@ public class IMSClient extends JFrame implements WritableGUI {
 		
 	}
 
-	public void logIn(String username) {
+	public void logIn(String username, String password) {
 		p1UsernameInput.setText("");
 		user_name_display.setText(username);
-		switchPanels(panelClient);
-		connection = new ClientConnection(this, username, "", "", "localhost", 8877); // TODO
-		new Thread(connection).start();
+		connection = new ClientConnection(this, username, "", password, "localhost", 8877);
+		boolean status = connection.login();
+		if(status) {
+			user_name_display.setText(username);
+			switchPanels(panelClient);
+		}
 	}
 	
 	public void logOut() {

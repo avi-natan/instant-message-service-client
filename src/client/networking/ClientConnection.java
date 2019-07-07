@@ -77,27 +77,7 @@ public class ClientConnection implements Runnable {
 	}
 	
 	public boolean register() {
-		byte[] bDelim = {-55};
-		byte[] bUsername = this.username.getBytes();
-		byte[] bEmail = this.email.getBytes();
-		byte[] bPassword = this.password.getBytes();
-		
-		byte[] initParams = new byte[1 + this.username.length() + 1 + this.email.length() + 1 + this.password.length() + 1];
-		int runner = 0;
-		
-		initParams[runner++] = bDelim[0];
-		for(int i = 0; i < this.username.length(); i++) {
-			initParams[runner++] = bUsername[i];
-		}
-		initParams[runner++] = bDelim[0];
-		for(int i = 0; i < this.email.length(); i++) {
-			initParams[runner++] = bEmail[i];
-		}
-		initParams[runner++] = bDelim[0];
-		for(int i = 0; i < this.password.length(); i++) {
-			initParams[runner++] = bPassword[i];
-		}
-		initParams[runner] = (byte)10;
+		byte[] initParams = createInitParams("REGISTER");
 		
 		try {
 			out.write(initParams);
@@ -105,7 +85,7 @@ public class ClientConnection implements Runnable {
 			System.out.println("something wrong");
 		}
 		
-		//TODO: wait for response and then do something
+		// wait for response and then do something
 		BufferedReader br = new BufferedReader(new InputStreamReader(in));
 		String line;
 		try {
@@ -130,6 +110,40 @@ public class ClientConnection implements Runnable {
 		return false;
 	}
 	
+	public boolean login() {
+		byte[] initParams = createInitParams("LOGIN");
+		
+		try {
+			out.write(initParams);
+		} catch (IOException e) {
+			System.out.println("something wrong");
+		}
+		
+		// wait for response and then do something
+		BufferedReader br = new BufferedReader(new InputStreamReader(in));
+		String line;
+		try {
+			line = br.readLine();
+			byte[] b = line.getBytes();
+			if(line != null && b[0] != -56) {
+				if(line.equals("SUCCESS")) {
+					new Thread(this).start();
+					System.out.println("successfully logged in as " + this.username);
+					return true;
+				} else {
+					System.out.println("could not login as " + this.username);
+					return false;
+				}
+			} else {
+				this.terminated = true;
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return false;
+	}
+	
 	public void terminate() {
 		this.terminated = true;
 		try {
@@ -138,6 +152,38 @@ public class ClientConnection implements Runnable {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	private byte[] createInitParams(String method) {
+		byte[] bDelim = {-55};
+		String header = method;
+		byte[] bHeader = header.getBytes();
+		byte[] bUsername = this.username.getBytes();
+		byte[] bEmail = this.email.getBytes();
+		byte[] bPassword = this.password.getBytes();
+		
+		byte[] initParams = new byte[1 + header.length() + 1 + this.username.length() + 1 + this.email.length() + 1 + this.password.length() + 1];
+		int runner = 0;
+		
+		initParams[runner++] = bDelim[0];
+		for(int i = 0; i < header.length(); i++) {
+			initParams[runner++] = bHeader[i];
+		}
+		initParams[runner++] = bDelim[0];
+		for(int i = 0; i < this.username.length(); i++) {
+			initParams[runner++] = bUsername[i];
+		}
+		initParams[runner++] = bDelim[0];
+		for(int i = 0; i < this.email.length(); i++) {
+			initParams[runner++] = bEmail[i];
+		}
+		initParams[runner++] = bDelim[0];
+		for(int i = 0; i < this.password.length(); i++) {
+			initParams[runner++] = bPassword[i];
+		}
+		initParams[runner] = (byte)10;
+		
+		return initParams;
 	}
 
 }
