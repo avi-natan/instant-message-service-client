@@ -76,8 +76,8 @@ public class ClientConnection implements Runnable {
 		}
 	}
 	
-	public boolean register() {
-		byte[] initParams = createInitParams("REGISTER");
+	public boolean handshake(String method) {
+		byte[] initParams = createInitParams(method);
 		
 		try {
 			out.write(initParams);
@@ -94,44 +94,10 @@ public class ClientConnection implements Runnable {
 			if(line != null && b[0] != -56) {
 				if(line.equals("SUCCESS")) {
 					new Thread(this).start();
-					System.out.println("successfully registered client " + this.username);
+					System.out.println("successfull " + method + " as " + this.username);
 					return true;
 				} else {
-					System.out.println("could not register client " + this.username);
-					return false;
-				}
-			} else {
-				this.terminated = true;
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		return false;
-	}
-	
-	public boolean login() {
-		byte[] initParams = createInitParams("LOGIN");
-		
-		try {
-			out.write(initParams);
-		} catch (IOException e) {
-			System.out.println("something wrong");
-		}
-		
-		// wait for response and then do something
-		BufferedReader br = new BufferedReader(new InputStreamReader(in));
-		String line;
-		try {
-			line = br.readLine();
-			byte[] b = line.getBytes();
-			if(line != null && b[0] != -56) {
-				if(line.equals("SUCCESS")) {
-					new Thread(this).start();
-					System.out.println("successfully logged in as " + this.username);
-					return true;
-				} else {
-					System.out.println("could not login as " + this.username);
+					System.out.println("could not " + method + " as " + this.username);
 					return false;
 				}
 			} else {

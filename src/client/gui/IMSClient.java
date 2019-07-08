@@ -604,7 +604,7 @@ public class IMSClient extends JFrame implements WritableGUI {
 		} else {
 			System.out.println("creating account: " + username + ", " + email + ", " + password + ", " + confirmedPassword);
 			connection = new ClientConnection(this, username, email, password, "localhost", 8877);
-			boolean status = connection.register();
+			boolean status = connection.handshake("REGISTER");
 			if(status) {
 				user_name_display.setText(username);
 				switchPanels(panelClient);
@@ -618,7 +618,7 @@ public class IMSClient extends JFrame implements WritableGUI {
 		p1UsernameInput.setText("");
 		user_name_display.setText(username);
 		connection = new ClientConnection(this, username, "", password, "localhost", 8877);
-		boolean status = connection.login();
+		boolean status = connection.handshake("LOGIN");
 		if(status) {
 			user_name_display.setText(username);
 			switchPanels(panelClient);
