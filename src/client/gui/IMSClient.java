@@ -641,7 +641,14 @@ public class IMSClient extends JFrame implements WritableGUI {
 		} catch (NullPointerException e) {
 			text = "Unknown";
 		}
-		friends_list_model.add(0, text);
+		
+		connection.touchFriend("ADDFRIEND", text);
+		
+		// will not wait for an answer. handling will happen in the run loop.
+	}
+	
+	public void addFriendCallback(String friend) {
+		friends_list_model.add(0, friend);
 	}
 	
 	public class FriendPopupMenu extends JPopupMenu {

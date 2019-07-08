@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 
 import client.gui.IMSClient;
+import client.protocol.IMSProtocol;
 
 public class ClientConnection implements Runnable {
 	
@@ -51,6 +52,7 @@ public class ClientConnection implements Runnable {
 
 	@Override
 	public void run() {
+		// main running loop
 		while(!this.terminated) {
 			BufferedReader br = new BufferedReader(new InputStreamReader(in));
 			String line;
@@ -58,7 +60,8 @@ public class ClientConnection implements Runnable {
 				line = br.readLine();
 				byte[] b = line.getBytes();
 				if(line != null && b[0] != -56) {
-					gui.write(line);
+					String[] message = IMSProtocol.bytesToMessage(b);
+					processMessage(message);
 				} else {
 					this.terminated = true;
 				}
@@ -76,8 +79,27 @@ public class ClientConnection implements Runnable {
 		}
 	}
 	
+	private void processMessage(String[] message) throws IOException {
+		switch(message[0]) {
+		case "WELCOME":
+			gui.write(message[1]);
+			break;
+		case "ADDFRIEND":
+			gui.write(message[0] + " " + message[1] + ": " + message[2]);
+			if(message[1].equals("SUCCESS")) gui.addFriendCallback(message[2]);
+			break;
+		default:
+			break;	
+		}
+	}
+	
 	public boolean handshake(String method) {
-		byte[] initParams = createInitParams(method);
+		String[] message = new String[4];
+		message[0] = method;
+		message[1] = this.username;
+		message[2] = this.email;
+		message[3] = this.password;
+		byte[] initParams = IMSProtocol.messageToBytes(message);
 		
 		try {
 			out.write(initParams);
@@ -110,6 +132,23 @@ public class ClientConnection implements Runnable {
 		return false;
 	}
 	
+	public boolean touchFriend(String method, String friendName) {
+		String[] message = new String[2];
+		message[0] = method;
+		message[1] = friendName;
+		byte[] touchFriendParams = IMSProtocol.messageToBytes(message);
+		
+		try {
+			out.write(touchFriendParams);
+		} catch (IOException e) {
+			System.out.println("something wrong");
+		}
+		
+		// finish here. response handling will happen in the run loop.
+		
+		return false;
+	}
+
 	public void terminate() {
 		this.terminated = true;
 		try {
@@ -118,38 +157,6 @@ public class ClientConnection implements Runnable {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
-	
-	private byte[] createInitParams(String method) {
-		byte[] bDelim = {-55};
-		String header = method;
-		byte[] bHeader = header.getBytes();
-		byte[] bUsername = this.username.getBytes();
-		byte[] bEmail = this.email.getBytes();
-		byte[] bPassword = this.password.getBytes();
-		
-		byte[] initParams = new byte[1 + header.length() + 1 + this.username.length() + 1 + this.email.length() + 1 + this.password.length() + 1];
-		int runner = 0;
-		
-		initParams[runner++] = bDelim[0];
-		for(int i = 0; i < header.length(); i++) {
-			initParams[runner++] = bHeader[i];
-		}
-		initParams[runner++] = bDelim[0];
-		for(int i = 0; i < this.username.length(); i++) {
-			initParams[runner++] = bUsername[i];
-		}
-		initParams[runner++] = bDelim[0];
-		for(int i = 0; i < this.email.length(); i++) {
-			initParams[runner++] = bEmail[i];
-		}
-		initParams[runner++] = bDelim[0];
-		for(int i = 0; i < this.password.length(); i++) {
-			initParams[runner++] = bPassword[i];
-		}
-		initParams[runner] = (byte)10;
-		
-		return initParams;
 	}
 
 }
