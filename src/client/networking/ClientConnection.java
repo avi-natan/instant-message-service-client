@@ -88,6 +88,9 @@ public class ClientConnection implements Runnable {
 			gui.write(message[0] + " " + message[1] + ": " + message[2]);
 			if(message[1].equals("SUCCESS")) gui.addFriendCallback(message[2]);
 			break;
+		case "REMOVEFRIEND":
+			gui.write(message[0] + " " + message[1] + ": " + message[2]);
+			if(message[1].equals("SUCCESS")) gui.removeFriendCallback(message[2]);
 		default:
 			break;	
 		}
@@ -132,7 +135,7 @@ public class ClientConnection implements Runnable {
 		return false;
 	}
 	
-	public boolean touchFriend(String method, String friendName) {
+	public void touchFriend(String method, String friendName) {
 		String[] message = new String[2];
 		message[0] = method;
 		message[1] = friendName;
@@ -146,7 +149,6 @@ public class ClientConnection implements Runnable {
 		
 		// finish here. response handling will happen in the run loop.
 		
-		return false;
 	}
 
 	public void terminate() {

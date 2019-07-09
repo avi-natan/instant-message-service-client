@@ -634,7 +634,7 @@ public class IMSClient extends JFrame implements WritableGUI {
 		cardlayout.show(layeredPane, panel.getName());
 	}
 	
-	public void addNewFriend() {
+	private void addNewFriend() {
 		String text;
 		try {
 			text = add_username.getText();
@@ -651,6 +651,15 @@ public class IMSClient extends JFrame implements WritableGUI {
 		friends_list_model.add(0, friend);
 	}
 	
+	private void removeFriend(String name) {
+		System.out.println("removing friend: " + name);
+		connection.touchFriend("REMOVEFRIEND", name);
+	}
+	
+	public void removeFriendCallback(String name) {
+		friends_list_model.removeElement(name);
+	}
+	
 	public class FriendPopupMenu extends JPopupMenu {
 		int elementIndex;
 		JMenuItem item;
@@ -661,7 +670,7 @@ public class IMSClient extends JFrame implements WritableGUI {
 				
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					friends_list_model.remove(elementIndex);
+					removeFriend(friends_list_model.get(elementIndex));
 				}
 			});
 			add(item);
