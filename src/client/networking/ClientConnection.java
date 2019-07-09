@@ -117,7 +117,9 @@ public class ClientConnection implements Runnable {
 			line = br.readLine();
 			byte[] b = line.getBytes();
 			if(line != null && b[0] != -56) {
-				if(line.equals("SUCCESS")) {
+				String[] reply = IMSProtocol.bytesToMessage(b);
+				if(reply[0].equals("SUCCESS")) {
+					gui.populateFriendList(reply);
 					new Thread(this).start();
 					System.out.println("successfull " + method + " as " + this.username);
 					return true;

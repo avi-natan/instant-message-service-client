@@ -625,6 +625,15 @@ public class IMSClient extends JFrame implements WritableGUI {
 		}
 	}
 	
+	@Override
+	public void populateFriendList(String[] friends) {
+		friends_list_model.clear();
+		for(int i = 1; i < friends.length; i++) {
+			addFriendCallback(friends[i]);
+		}
+		
+	}
+	
 	public void logOut() {
 		connection.terminate();
 		switchPanels(panelLogIn);
@@ -647,6 +656,7 @@ public class IMSClient extends JFrame implements WritableGUI {
 		// will not wait for an answer. handling will happen in the run loop.
 	}
 	
+	@Override
 	public void addFriendCallback(String friend) {
 		friends_list_model.add(0, friend);
 	}
@@ -656,6 +666,7 @@ public class IMSClient extends JFrame implements WritableGUI {
 		connection.touchFriend("REMOVEFRIEND", name);
 	}
 	
+	@Override
 	public void removeFriendCallback(String name) {
 		friends_list_model.removeElement(name);
 	}
