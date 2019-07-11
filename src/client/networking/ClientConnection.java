@@ -28,6 +28,8 @@ public class ClientConnection implements Runnable {
 	
 	private boolean terminated;
 	
+	private String selectedFriend;
+	
 	public ClientConnection() {}
 	
 	public ClientConnection(IMSClient gui, String username, String email, String password, String remoteHost, int remotePort) {
@@ -48,6 +50,7 @@ public class ClientConnection implements Runnable {
 			e.printStackTrace();
 		}
 		this.terminated = false;
+		this.selectedFriend = "";
 	}
 
 	@Override
@@ -91,6 +94,12 @@ public class ClientConnection implements Runnable {
 		case "REMOVEFRIEND":
 			gui.write(message[0] + " " + message[1] + ": " + message[2]);
 			if(message[1].equals("SUCCESS")) gui.removeFriendCallback(message[2]);
+		case "SELECTFRIEND":
+			System.out.println("Needs to be implementd"); // TODO implement
+			break;
+		case "MESSAGE":
+			gui.write(message[1] + ": " + message[2]);
+			break;
 		default:
 			break;	
 		}
@@ -138,6 +147,13 @@ public class ClientConnection implements Runnable {
 	}
 	
 	public void touchFriend(String method, String friendName) {
+		
+		if(method.equals("SELECTFRIEND")) {
+			this.selectedFriend = friendName;
+			return;
+		}
+		// TODO: remove above code when SELECTFRIEND is fully implemented
+		
 		String[] message = new String[2];
 		message[0] = method;
 		message[1] = friendName;
@@ -151,6 +167,26 @@ public class ClientConnection implements Runnable {
 		
 		// finish here. response handling will happen in the run loop.
 		
+		
+	}
+	
+	public void sendMessage(String msg) {
+		System.out.println("sending to " + this.selectedFriend + ": " + msg);
+		String[] message = new String[3];
+		message[0] = "MESSAGE";
+		message[1] = this.selectedFriend;
+		message[2] = msg;
+		byte[] messageBytes = IMSProtocol.messageToBytes(message);
+		
+		gui.write(this.username + ": " + msg);
+		
+		try {
+			out.write(messageBytes);
+		} catch (IOException e) {
+			System.out.println("something wrong");
+		}
+		
+		// finish here. response handling will happen in the run loop.
 	}
 
 	public void terminate() {

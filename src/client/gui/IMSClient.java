@@ -35,6 +35,7 @@ import java.awt.CardLayout;
 import javax.swing.JList;
 import javax.swing.JMenuItem;
 import javax.swing.JTextArea;
+import javax.swing.JScrollPane;
 
 @SuppressWarnings("serial")
 public class IMSClient extends JFrame implements WritableGUI {
@@ -93,7 +94,8 @@ public class IMSClient extends JFrame implements WritableGUI {
 			private DefaultListModel<String> friends_list_model;
 			private JList<String> friends_list;
 		private JPanel panel_chat;
-			private JTextArea chat_field;
+			private JScrollPane chat_scroller;
+				private JTextArea chat_field;
 		private JPanel panel_message;
 			private JTextField message_field;
 			private JButton send_button;
@@ -105,10 +107,12 @@ public class IMSClient extends JFrame implements WritableGUI {
 	private boolean pw;
 	private boolean cpw;
 	
+	
 	/**
 	 * Launch the application.
 	 */
 	public static void main(String[] args) {
+		System.out.println("Hello IMS Client!");
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
@@ -563,6 +567,10 @@ public class IMSClient extends JFrame implements WritableGUI {
 				if(SwingUtilities.isRightMouseButton(e)) {
 					FriendPopupMenu menu = new FriendPopupMenu(friends_list.locationToIndex(e.getPoint()));
 					menu.show(e.getComponent(), e.getX(), e.getY());
+				} else if(SwingUtilities.isLeftMouseButton(e)) {
+					write("Selected friend: " + friends_list_model.get(friends_list.locationToIndex(e.getPoint())));
+					connection.touchFriend("SELECTFRIEND", friends_list_model.get(friends_list.locationToIndex(e.getPoint())));
+					// TODO implement the actual selection process, the above code is dummy
 				}
 			}
 		});
@@ -575,8 +583,12 @@ public class IMSClient extends JFrame implements WritableGUI {
 		panel_chat.setLayout(null);
 		
 		chat_field = new JTextArea();
-		chat_field.setBounds(25, 26, 446, 416);
-		panel_chat.add(chat_field);
+		chat_field.setBackground(Color.WHITE);
+		
+		chat_scroller = new JScrollPane(chat_field);
+		chat_scroller.setBounds(25, 26, 446, 416);
+		chat_scroller.setBackground(Color.WHITE);
+		panel_chat.add(chat_scroller);
 		
 		panel_message = new JPanel();
 		panel_message.setBorder(new LineBorder(Color.LIGHT_GRAY));
@@ -586,11 +598,32 @@ public class IMSClient extends JFrame implements WritableGUI {
 		
 		message_field = new JTextField();
 		message_field.setBounds(10, 11, 406, 51);
+		message_field.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyReleased(KeyEvent e) {
+				if(message_field.getText().length() == 0) {
+					send_button.setEnabled(false);
+				} else {
+					send_button.setEnabled(true);
+				}
+			}
+		});
 		panel_message.add(message_field);
 		message_field.setColumns(10);
 		
 		send_button = new JButton("Send");
 		send_button.setBounds(426, 11, 70, 51);
+		send_button.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				sendMessage(message_field.getText());
+				message_field.setText("");
+				send_button.setEnabled(false);
+			}
+
+		});
+		send_button.setEnabled(false);
 		panel_message.add(send_button);
 		layeredPane.setName("layeredPane");
 		
@@ -670,6 +703,12 @@ public class IMSClient extends JFrame implements WritableGUI {
 	public void removeFriendCallback(String name) {
 		friends_list_model.removeElement(name);
 	}
+	
+	private void sendMessage(String message) {
+		connection.sendMessage(message);
+	}
+	
+	
 	
 	public class FriendPopupMenu extends JPopupMenu {
 		int elementIndex;
