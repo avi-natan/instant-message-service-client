@@ -568,8 +568,9 @@ public class IMSClient extends JFrame implements WritableGUI {
 					FriendPopupMenu menu = new FriendPopupMenu(friends_list.locationToIndex(e.getPoint()));
 					menu.show(e.getComponent(), e.getX(), e.getY());
 				} else if(SwingUtilities.isLeftMouseButton(e)) {
-					write("Selected friend: " + friends_list_model.get(friends_list.locationToIndex(e.getPoint())));
+					System.out.println("Selected friend: " + friends_list_model.get(friends_list.locationToIndex(e.getPoint())));
 					connection.touchFriend("SELECTFRIEND", friends_list_model.get(friends_list.locationToIndex(e.getPoint())));
+					chat_field.setText(connection.getFriendChat(friends_list_model.get(friends_list.locationToIndex(e.getPoint()))));
 					// TODO implement the actual selection process, the above code is dummy
 				}
 			}
@@ -584,6 +585,7 @@ public class IMSClient extends JFrame implements WritableGUI {
 		
 		chat_field = new JTextArea();
 		chat_field.setBackground(Color.WHITE);
+		chat_field.setEditable(false);
 		
 		chat_scroller = new JScrollPane(chat_field);
 		chat_scroller.setBounds(25, 26, 446, 416);
@@ -692,6 +694,7 @@ public class IMSClient extends JFrame implements WritableGUI {
 	@Override
 	public void addFriendCallback(String friend) {
 		friends_list_model.add(0, friend);
+		chat_field.setText(connection.getFriendChat(friend));
 	}
 	
 	private void removeFriend(String name) {
@@ -702,6 +705,7 @@ public class IMSClient extends JFrame implements WritableGUI {
 	@Override
 	public void removeFriendCallback(String name) {
 		friends_list_model.removeElement(name);
+		chat_field.setText("");
 	}
 	
 	private void sendMessage(String message) {

@@ -2,7 +2,8 @@ package client.networking;
 
 import java.net.Socket;
 import java.net.UnknownHostException;
-
+import java.util.HashMap;
+import java.util.Map;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,6 +31,8 @@ public class ClientConnection implements Runnable {
 	
 	private String selectedFriend;
 	
+	private Map<String, StringBuilder> friendsChats;
+	
 	public ClientConnection() {}
 	
 	public ClientConnection(IMSClient gui, String username, String email, String password, String remoteHost, int remotePort) {
@@ -51,6 +54,8 @@ public class ClientConnection implements Runnable {
 		}
 		this.terminated = false;
 		this.selectedFriend = "";
+		this.friendsChats = new HashMap<>();
+		this.friendsChats.put(this.username, new StringBuilder());
 	}
 
 	@Override
@@ -85,20 +90,29 @@ public class ClientConnection implements Runnable {
 	private void processMessage(String[] message) throws IOException {
 		switch(message[0]) {
 		case "WELCOME":
+			this.friendsChats.get(this.username).append(message[1] + System.lineSeparator());
 			gui.write(message[1]);
 			break;
 		case "ADDFRIEND":
-			gui.write(message[0] + " " + message[1] + ": " + message[2]);
-			if(message[1].equals("SUCCESS")) gui.addFriendCallback(message[2]);
+			System.out.println(message[0] + " " + message[1] + ": " + message[2]);
+			if(message[1].equals("SUCCESS")) {
+				this.friendsChats.put(message[2], new StringBuilder());
+				this.friendsChats.get(message[2]).append(message[0] + " " + message[1] + ": " + message[2] + System.lineSeparator());
+				gui.addFriendCallback(message[2]);
+			}
 			break;
 		case "REMOVEFRIEND":
-			gui.write(message[0] + " " + message[1] + ": " + message[2]);
-			if(message[1].equals("SUCCESS")) gui.removeFriendCallback(message[2]);
+			System.out.println(message[0] + " " + message[1] + ": " + message[2]);
+			if(message[1].equals("SUCCESS")) {
+				this.friendsChats.remove(message[2]);
+				gui.removeFriendCallback(message[2]);
+			}
 		case "SELECTFRIEND":
-			System.out.println("Needs to be implementd"); // TODO implement
+			System.out.println("Needs to be implementd"); // TODO implement - maybe it doesnt needs to be implemented from here
 			break;
 		case "MESSAGE":
-			gui.write(message[1] + ": " + message[2]);
+			this.friendsChats.get(message[1]).append(message[1] + ": " + message[2] + System.lineSeparator());
+			if(message[1].equals(selectedFriend)) gui.write(message[1] + ": " + message[2]);
 			break;
 		default:
 			break;	
@@ -128,6 +142,9 @@ public class ClientConnection implements Runnable {
 			if(line != null && b[0] != -56) {
 				String[] reply = IMSProtocol.bytesToMessage(b);
 				if(reply[0].equals("SUCCESS")) {
+					for(int i = 1; i < reply.length; i++) {
+						this.friendsChats.put(reply[i], new StringBuilder());
+					}
 					gui.populateFriendList(reply);
 					new Thread(this).start();
 					System.out.println("successfull " + method + " as " + this.username);
@@ -178,6 +195,7 @@ public class ClientConnection implements Runnable {
 		message[2] = msg;
 		byte[] messageBytes = IMSProtocol.messageToBytes(message);
 		
+		this.friendsChats.get(this.selectedFriend).append(this.username + ": " + msg + System.lineSeparator());
 		gui.write(this.username + ": " + msg);
 		
 		try {
@@ -197,6 +215,10 @@ public class ClientConnection implements Runnable {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public String getFriendChat(String friend) {
+		return this.friendsChats.get(friend).toString();
 	}
 
 }
