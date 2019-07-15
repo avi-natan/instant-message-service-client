@@ -571,7 +571,6 @@ public class IMSClient extends JFrame implements WritableGUI {
 					System.out.println("Selected friend: " + friends_list_model.get(friends_list.locationToIndex(e.getPoint())));
 					connection.touchFriend("SELECTFRIEND", friends_list_model.get(friends_list.locationToIndex(e.getPoint())));
 					chat_field.setText(connection.getFriendChat(friends_list_model.get(friends_list.locationToIndex(e.getPoint()))));
-					// TODO implement the actual selection process, the above code is dummy
 				}
 			}
 		});
@@ -663,7 +662,7 @@ public class IMSClient extends JFrame implements WritableGUI {
 	@Override
 	public void populateFriendList(String[] friends) {
 		friends_list_model.clear();
-		for(int i = 1; i < friends.length; i++) {
+		for(int i = 1; i < friends.length; i=i+2) {
 			addFriendCallback(friends[i]);
 		}
 		

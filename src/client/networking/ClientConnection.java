@@ -107,8 +107,6 @@ public class ClientConnection implements Runnable {
 				this.friendsChats.remove(message[2]);
 				gui.removeFriendCallback(message[2]);
 			}
-		case "SELECTFRIEND":
-			System.out.println("Needs to be implementd"); // TODO implement - maybe it doesnt needs to be implemented from here
 			break;
 		case "MESSAGE":
 			this.friendsChats.get(message[1]).append(message[1] + ": " + message[2] + System.lineSeparator());
@@ -142,8 +140,8 @@ public class ClientConnection implements Runnable {
 			if(line != null && b[0] != -56) {
 				String[] reply = IMSProtocol.bytesToMessage(b);
 				if(reply[0].equals("SUCCESS")) {
-					for(int i = 1; i < reply.length; i++) {
-						this.friendsChats.put(reply[i], new StringBuilder());
+					for(int i = 1; i < reply.length; i=i+2) {
+						this.friendsChats.put(reply[i], new StringBuilder(reply[i+1]));
 					}
 					gui.populateFriendList(reply);
 					new Thread(this).start();
@@ -169,7 +167,6 @@ public class ClientConnection implements Runnable {
 			this.selectedFriend = friendName;
 			return;
 		}
-		// TODO: remove above code when SELECTFRIEND is fully implemented
 		
 		String[] message = new String[2];
 		message[0] = method;
