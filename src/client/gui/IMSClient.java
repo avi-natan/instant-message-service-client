@@ -12,7 +12,6 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.JSeparator;
 import javax.swing.border.LineBorder;
-
 import javax.swing.JTextField;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -37,11 +36,31 @@ import javax.swing.JMenuItem;
 import javax.swing.JTextArea;
 import javax.swing.JScrollPane;
 
+/**
+ * The Instant Message Service (IMS) Server class.
+ * 
+ * Extends JFrame to provide users with graphical user interface,
+ * allowing them to register, log in, and communicate with their
+ * peers.
+ * 
+ * Also implements the WritableGUI interface by providing the
+ * {@link ClientConnection} with tools to manipulate its graphical
+ * components.
+ * 
+ * @author Avi
+ *
+ */
 @SuppressWarnings("serial")
 public class IMSClient extends JFrame implements WritableGUI {
 	
+	/*
+	 * The underlying connection manager for this client instance.
+	 */
 	private ClientConnection connection;
 
+	/*
+	 * Graphical components of this client instance.
+	 */
 	private JPanel contentPane;
 	private JLayeredPane layeredPane;
 	private CardLayout cardlayout = new CardLayout(0, 0);
@@ -101,7 +120,9 @@ public class IMSClient extends JFrame implements WritableGUI {
 			private JButton send_button;
 
 	
-			
+	/*
+	 * Variables used for the registration panel		
+	 */
 	private boolean un;
 	private boolean em;
 	private boolean pw;
@@ -632,6 +653,23 @@ public class IMSClient extends JFrame implements WritableGUI {
 		
 	}
 	
+	/**
+	 * Creates a new account - namely registers a new user.
+	 * 
+	 * The method performs an input check (for now it's matching of the password
+	 * and the confirmed password) and if the input is valid the method creates
+	 * a new {@link ClientConnection} and tries to establish a connection to the server
+	 * by using the {@link ClientConnection#handshake()} method with the
+	 * "REGISTER" IMS protocol keyword.
+	 * 
+	 * If a connection to the server was established, the method switches panels
+	 * to the client panel.
+	 * 
+	 * @param username - The registering username. 
+	 * @param email - The registering email.
+	 * @param password - The registering password.
+	 * @param confirmedPassword - A confirmation of the registering password.
+	 */
 	public void createAccount(String username, String email, String password, String confirmedPassword) {
 		if(!password.equals(confirmedPassword)) {
 			System.out.println("Password and confirmed password not the same: " + password + ", " + confirmedPassword);
@@ -648,9 +686,22 @@ public class IMSClient extends JFrame implements WritableGUI {
 		
 	}
 
+	/**
+	 * Logs in an existing user to the service.
+	 * 
+	 * The method creates a new {@link ClientConnection} and tries to establish
+	 * a connection to the server by using the {@link ClientConnection#handshake()}
+	 * method with the "LOGIN" IMS protocol keyword.
+	 * 
+	 * If a connection to the server was established, the method switches panels
+	 * to the client panel.
+	 * 
+	 * @param username - The login username.
+	 * @param password - The login password.
+	 */
 	public void logIn(String username, String password) {
 		p1UsernameInput.setText("");
-		user_name_display.setText(username);
+		user_name_display.setText(username); // TODO delete
 		connection = new ClientConnection(this, username, "", password, "localhost", 8877);
 		boolean status = connection.handshake("LOGIN");
 		if(status) {
@@ -659,6 +710,12 @@ public class IMSClient extends JFrame implements WritableGUI {
 		}
 	}
 	
+	/**
+	 * This method uses the {@link #addFriendCallback} to perform the addition
+	 * for each friend specified in the input, since the last step of adding a
+	 * new friend that is performed in the said method is similar to the action
+	 * that needs to be done when adding the friends after a login.
+	 */
 	@Override
 	public void populateFriendList(String[] friends) {
 		friends_list_model.clear();
@@ -668,15 +725,37 @@ public class IMSClient extends JFrame implements WritableGUI {
 		
 	}
 	
+	/**
+	 * Terminates the connection associated with this client session by
+	 * calling {@link ClientConnection#terminate} and returns the GUI to
+	 * the login screen.
+	 */
 	public void logOut() {
 		connection.terminate();
 		switchPanels(panelLogIn);
 	}
 	
+	/**
+	 * Hides the current showing panel and shows the panel that is given
+	 * as an input.
+	 * 
+	 * @param panel - The panel to show.
+	 */
 	public void switchPanels(JPanel panel) {
 		cardlayout.show(layeredPane, panel.getName());
 	}
 	
+	/**
+	 * Adds a new friend by taking the text from the add_username JText
+	 * component, and calling {@link ClientConnection#touchFriend} with
+	 * the IMS protocol "ADDFRIEND" keyword and the text taken from 
+	 * add_username as the name of the friend.
+	 * <br>
+	 * <br>
+	 * <b>TODO:</b> parameterize this method instead of taking the friend
+	 * name out of the JText component.
+	 * 
+	 */
 	private void addNewFriend() {
 		String text;
 		try {
@@ -690,29 +769,64 @@ public class IMSClient extends JFrame implements WritableGUI {
 		// will not wait for an answer. handling will happen in the run loop.
 	}
 	
+	/**
+	 * This method adds the friend with the specified name - it adds his name
+	 * to the friends list, and sets the chat field text to be the chat history
+	 * of the client with the friend.
+	 * <br>
+	 * <br>
+	 * <b>TODO:</b> needs to also set the current friend name in ClientConnection.
+	 */
 	@Override
 	public void addFriendCallback(String friend) {
 		friends_list_model.add(0, friend);
 		chat_field.setText(connection.getFriendChat(friend));
 	}
 	
+	/**
+	 * Removes a friend with the specified name from the clients friends,
+	 * by calling the {@link ClientConnection#touchFriend} method with the
+	 * IMS protocol "REMOVEFRIEND" keyword.
+	 * 
+	 * @param name - The name of the friend to be removed.
+	 */
 	private void removeFriend(String name) {
 		System.out.println("removing friend: " + name);
 		connection.touchFriend("REMOVEFRIEND", name);
 	}
 	
+	/**
+	 * This method removes the friend with the specified name - it removes his name
+	 * from the friends list, and sets the chat field text to be empty.
+	 * <br>
+	 * <br>
+	 * <b>TODO:</b> maybe it should update the current friend name in ClientConnection.
+	 */
 	@Override
 	public void removeFriendCallback(String name) {
 		friends_list_model.removeElement(name);
 		chat_field.setText("");
 	}
 	
+	/**
+	 * Uses the {@link ClientConnection} class to send a message that the user wrote
+	 * to one of his friends, to the IMS server.
+	 * 
+	 * @param message - The user message to be sent.
+	 */
 	private void sendMessage(String message) {
 		connection.sendMessage(message);
 	}
 	
 	
-	
+	/**
+	 * A pop up menu that appears when the user right clicks on a friend name from
+	 * his list. The menu displays additional actions that the user can perform on
+	 * the selected friend, such as deleting.
+	 *  
+	 * @author Avi
+	 *
+	 */
 	public class FriendPopupMenu extends JPopupMenu {
 		int elementIndex;
 		JMenuItem item;
@@ -730,6 +844,10 @@ public class IMSClient extends JFrame implements WritableGUI {
 		}
 	}
 	
+	/**
+	 * The method displays the input string onto the chat_field component by
+	 * appending it to the component followed by a line separator.
+	 */
 	@Override
     public void write(String s) {
 		chat_field.append(s + System.lineSeparator());
