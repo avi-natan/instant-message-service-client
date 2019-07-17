@@ -13,6 +13,22 @@ import java.io.OutputStream;
 import client.gui.IMSClient;
 import client.protocol.IMSProtocol;
 
+/**
+ * The class that is responsible for the connection of this client with
+ * the server, managing the traffic and the client-side state of the current
+ * logged user, his friends, the chat and his chat histories with his friends.
+ * 
+ * It is connected to his server-side counterpart, the ClientHandler, and
+ * shares data with it about the state of the logged client, and also
+ * communicates system and user messages.
+ * 
+ * It uses the {@link WriteableGUI} interface to make required changes to the
+ * GUI that the user interacts with (e.g. updating the chat area after a
+ * user message has been received).
+ * 
+ * @author Avi
+ *
+ */
 public class ClientConnection implements Runnable {
 	
 	private IMSClient gui;
@@ -33,8 +49,34 @@ public class ClientConnection implements Runnable {
 	
 	private Map<String, StringBuilder> friendsChats;
 	
+	/**
+	 * Empty constructor.
+	 * <br>
+	 * <br>
+	 * <b>TODO:</b> maybe delete this or something.
+	 * 
+	 */
 	public ClientConnection() {}
 	
+	/**
+	 * The constructor. Called from the {@link IMSClient} at login/register time.
+	 * It constructs the ClientConnection with the given parameters and tries to open
+	 * a socket and get its input and output streams (On error it throws exception).<br>
+	 * <br>
+	 * After constructing, the {@link #handshake} method is called, where the client
+	 * initialization completes, after receiving more initialization data from the
+	 * server.<br>
+	 * <br>
+	 * The initialization varies depending on the IMS protocol keyword sent in the
+	 * handshake method ("REGISTER"/"LOGIN").
+	 * 
+	 * @param gui - A pointer to the {@link WriteaBleGUI} client GUI that created this ClientConnection.
+	 * @param username - The username given by the user.
+	 * @param email - the email given by the user. Empty if the IMSP keywords was "LOGIN".
+	 * @param password - The password given by the user.
+	 * @param remoteHost - The IP address of the server. 
+	 * @param remotePort - The port number of the server.
+	 */
 	public ClientConnection(IMSClient gui, String username, String email, String password, String remoteHost, int remotePort) {
 		super();
 		this.gui = gui;
@@ -58,6 +100,15 @@ public class ClientConnection implements Runnable {
 		this.friendsChats.put(this.username, new StringBuilder());
 	}
 
+	/**
+	 * The main loop of the client connection. The client connection listens in this loop
+	 * for any messages received from its server side counterpart. After parsing a message
+	 * according to the {@link IMSProtocol} standard, it uses {@link #processMessage} to
+	 * process the message accordingly.
+	 * <br>
+	 * The method runs while it is not terminated, as indicated by the terminated boolean member.
+	 * 
+	 */
 	@Override
 	public void run() {
 		// main running loop
@@ -87,6 +138,12 @@ public class ClientConnection implements Runnable {
 		}
 	}
 	
+	/**
+	 * Processes a message received by the input stream.
+	 * 
+	 * @param message - The message received by the input stream.
+	 * @throws IOException - TODO remove this
+	 */
 	private void processMessage(String[] message) throws IOException {
 		switch(message[0]) {
 		case "WELCOME":
@@ -117,6 +174,24 @@ public class ClientConnection implements Runnable {
 		}
 	}
 	
+	/**
+	 * Completes the ClientConnection initialization by requesting data from
+	 * its server-side counterpart ClientHandler.<br>
+	 * If the IMS protocol keyword is "REGISTER", the expected reply from the server
+	 * is "SUCCESS". Otherwise, the expected reply is "SUCCESS" followed by
+	 * an array of this client friends names and their chat history, all in 
+	 * byte array that can be converted to string array using the {@link IMSProtocol}.
+	 * <br><br>
+	 * If a "SUCCESS" has been received, the client connection initializes the client
+	 * friends list (On a newly registered client the list would be empty), and then
+	 * starts the {@link #run} method in a new thread, and finally returning true,
+	 * indicating that a connection was successfully made, meaning that this client
+	 * is ready to communicate with its server side counterpart. 
+	 * 
+	 * @param method - The IMS protocol keyword to be used ("REGISTER"/"LOGIN").
+	 * 
+	 * @return True if a connection was established.
+	 */
 	public boolean handshake(String method) {
 		String[] message = new String[4];
 		message[0] = method;
@@ -161,6 +236,23 @@ public class ClientConnection implements Runnable {
 		return false;
 	}
 	
+	/**
+	 * Manipulates a certain friend's status according to 3 types initiated
+	 * by the GUI: "ADDFRIEND", "REMOVEFRIEND", "SELECTFRIEND".<br>
+	 * ADDFRIEND will result in adding a friend, if there is a registered 
+	 * user with the same name.<br>
+	 * SELECTFRIEND will transfer the communication focus to the selected friend,
+	 * and update the client chat accordingly.<br>
+	 * REMOVEFRIEND will result in removing a friend from the client's friends,
+	 * and also removing the client from the friend's friend list.<br>
+	 * 
+	 * With both ADDFRIEND and REMOVEFRIEND, a system message is sent to the server,
+	 * since adding or removing a friend requires some server side actions.
+	 * With SELECTFRIEND, all the changes required are done on the client side.
+	 * 
+	 * @param method
+	 * @param friendName
+	 */
 	public void touchFriend(String method, String friendName) {
 		
 		if(method.equals("SELECTFRIEND")) {
@@ -184,6 +276,22 @@ public class ClientConnection implements Runnable {
 		
 	}
 	
+	/**
+	 * Sends the user message to the focused friend (i.e. the last selected friend
+	 * before sending the message).<br> 
+	 * The method takes the raw message msg and constructs an IMS protocol message
+	 * with the format:<br>
+	 * <br>
+	 * MESSAGE &lt;selected friend name&gt; &lt;raw message&gt; <br>
+	 * <br>
+	 * and then uses {@link IMSProtocol} to turn it into byte array.<br>
+	 * <br>
+	 * It then sends the byte array to its server side counterpart and appends the 
+	 * original message to the chat history of the selected friend with this client
+	 * and also appends the message to the chat area in the GUI.
+	 * 
+	 * @param msg - The raw user message.
+	 */
 	public void sendMessage(String msg) {
 		System.out.println("sending to " + this.selectedFriend + ": " + msg);
 		String[] message = new String[3];
@@ -204,6 +312,11 @@ public class ClientConnection implements Runnable {
 		// finish here. response handling will happen in the run loop.
 	}
 
+	/**
+	 * Sets the 'terminated' boolean indicator of this client connection to true,
+	 * causing the loop in the {@link #run} method to stop.
+	 * Also sends a terminating message to its server side counterpart.
+	 */
 	public void terminate() {
 		this.terminated = true;
 		try {
@@ -214,6 +327,14 @@ public class ClientConnection implements Runnable {
 		}
 	}
 	
+	/**
+	 * Gets the String representing the chat history for a certain friend.
+	 * <br><br>
+	 * <b>TODO:</b> maybe rename this method.
+	 * 
+	 * @param friend - The name of the friend who;s chat history is requested.
+	 * @return The requested friend's chat history, as a string.
+	 */
 	public String getFriendChat(String friend) {
 		return this.friendsChats.get(friend).toString();
 	}
