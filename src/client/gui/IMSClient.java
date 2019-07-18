@@ -27,6 +27,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.NoSuchElementException;
 
 import javax.swing.JLayeredPane;
 
@@ -549,7 +550,7 @@ public class IMSClient extends JFrame implements WritableGUI {
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				addNewFriend();
+				addNewFriend(add_username.getText());
 			}
 		});
 		add_button.setEnabled(false);
@@ -591,7 +592,7 @@ public class IMSClient extends JFrame implements WritableGUI {
 				} else if(SwingUtilities.isLeftMouseButton(e)) {
 					System.out.println("Selected friend: " + friends_list_model.get(friends_list.locationToIndex(e.getPoint())));
 					connection.touchFriend("SELECTFRIEND", friends_list_model.get(friends_list.locationToIndex(e.getPoint())));
-					chat_field.setText(connection.getFriendChat(friends_list_model.get(friends_list.locationToIndex(e.getPoint()))));
+					chat_field.setText(connection.getFriendChatHistory(friends_list_model.get(friends_list.locationToIndex(e.getPoint()))));
 				}
 			}
 		});
@@ -618,7 +619,7 @@ public class IMSClient extends JFrame implements WritableGUI {
 		panelClient.add(panel_message);
 		panel_message.setLayout(null);
 		
-		message_field = new JTextField();
+		message_field = new JTextField(); // TODO: should not be editable if there is no selected friend.
 		message_field.setBounds(10, 11, 406, 51);
 		message_field.addKeyListener(new KeyAdapter() {
 			@Override
@@ -701,7 +702,6 @@ public class IMSClient extends JFrame implements WritableGUI {
 	 */
 	public void logIn(String username, String password) {
 		p1UsernameInput.setText("");
-		user_name_display.setText(username); // TODO delete
 		connection = new ClientConnection(this, username, "", password, "localhost", 8877);
 		boolean status = connection.handshake("LOGIN");
 		if(status) {
@@ -717,7 +717,7 @@ public class IMSClient extends JFrame implements WritableGUI {
 	 * that needs to be done when adding the friends after a login.
 	 */
 	@Override
-	public void populateFriendList(String[] friends) {
+	public void initFriends(String[] friends) {
 		friends_list_model.clear();
 		for(int i = 1; i < friends.length; i=i+2) {
 			addFriendCallback(friends[i]);
@@ -746,26 +746,16 @@ public class IMSClient extends JFrame implements WritableGUI {
 	}
 	
 	/**
-	 * Adds a new friend by taking the text from the add_username JText
-	 * component, and calling {@link ClientConnection#touchFriend} with
-	 * the IMS protocol "ADDFRIEND" keyword and the text taken from 
-	 * add_username as the name of the friend.
-	 * <br>
-	 * <br>
-	 * <b>TODO:</b> parameterize this method instead of taking the friend
-	 * name out of the JText component.
+	 * Adds a friend with the specified name from the clients friends,
+	 * by calling the {@link ClientConnection#touchFriend} method with the
+	 * IMS protocol "ADDFRIEND" keyword.
+	 * 
+	 * @param name - The name of the friend to be added
 	 * 
 	 */
-	private void addNewFriend() {
-		String text;
-		try {
-			text = add_username.getText();
-		} catch (NullPointerException e) {
-			text = "Unknown";
-		}
-		
-		connection.touchFriend("ADDFRIEND", text);
-		
+	private void addNewFriend(String name) {
+		System.out.println("adding friend: " + name);
+		connection.touchFriend("ADDFRIEND", name);
 		// will not wait for an answer. handling will happen in the run loop.
 	}
 	
@@ -773,14 +763,14 @@ public class IMSClient extends JFrame implements WritableGUI {
 	 * This method adds the friend with the specified name - it adds his name
 	 * to the friends list, and sets the chat field text to be the chat history
 	 * of the client with the friend.
-	 * <br>
-	 * <br>
-	 * <b>TODO:</b> needs to also set the current friend name in ClientConnection.
+	 * 
+	 * @param friend - The friend to add.
 	 */
 	@Override
 	public void addFriendCallback(String friend) {
 		friends_list_model.add(0, friend);
-		chat_field.setText(connection.getFriendChat(friend));
+		chat_field.setText(connection.getFriendChatHistory(friend));
+		connection.setSelectedFriend(friend);
 	}
 	
 	/**
@@ -797,15 +787,22 @@ public class IMSClient extends JFrame implements WritableGUI {
 	
 	/**
 	 * This method removes the friend with the specified name - it removes his name
-	 * from the friends list, and sets the chat field text to be empty.
-	 * <br>
-	 * <br>
-	 * <b>TODO:</b> maybe it should update the current friend name in ClientConnection.
+	 * from the friends list, and selects the first friend in the list if there
+	 * is any (selects him and shows his chat field).
+	 * 
+	 * @param friend - The name of the removed friend.
 	 */
 	@Override
-	public void removeFriendCallback(String name) {
-		friends_list_model.removeElement(name);
-		chat_field.setText("");
+	public void removeFriendCallback(String friend) {
+		friends_list_model.removeElement(friend);
+		try {
+			String firstFriend = friends_list_model.firstElement();
+			chat_field.setText(connection.getFriendChatHistory(firstFriend));
+			connection.setSelectedFriend(firstFriend);
+		} catch (NoSuchElementException e) {
+			chat_field.setText("");
+			connection.setSelectedFriend("");
+		}
 	}
 	
 	/**

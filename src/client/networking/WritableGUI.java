@@ -32,26 +32,19 @@ public interface WritableGUI {
 	 * A callback function for the {@link ClientConnection} class to
 	 * use in order to perform the changes of removing a friend to
 	 * the GUI.
-	 * <br>
-	 * <br>
-	 * <b>TODO:</b> make the parameter names of this function and 
-	 * addFriendCallback consistent.
 	 *  
-	 * @param name - The name of the friend for which GUI changes are
+	 * @param friend - The name of the friend for which GUI changes are
 	 * to be made.
 	 */
-	public void removeFriendCallback(String name);
+	public void removeFriendCallback(String friend);
 	
 	/**
 	 * Populates the friends list at client login and set
 	 * their chat fields according to chat history of the
 	 * user with each one of the friends.
-	 * <br>
-	 * <br>
-	 * <b>TODO:</b> rename this method to something like initFriends.
 	 * 
 	 * @param friends - A string array representing the user's friends.
 	 */
-	public void populateFriendList(String[] friends);
+	public void initFriends(String[] friends);
 
 }

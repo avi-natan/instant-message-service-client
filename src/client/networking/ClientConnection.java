@@ -47,16 +47,7 @@ public class ClientConnection implements Runnable {
 	
 	private String selectedFriend;
 	
-	private Map<String, StringBuilder> friendsChats;
-	
-	/**
-	 * Empty constructor.
-	 * <br>
-	 * <br>
-	 * <b>TODO:</b> maybe delete this or something.
-	 * 
-	 */
-	public ClientConnection() {}
+	private Map<String, StringBuilder> friendsChatHistories;
 	
 	/**
 	 * The constructor. Called from the {@link IMSClient} at login/register time.
@@ -96,8 +87,8 @@ public class ClientConnection implements Runnable {
 		}
 		this.terminated = false;
 		this.selectedFriend = "";
-		this.friendsChats = new HashMap<>();
-		this.friendsChats.put(this.username, new StringBuilder());
+		this.friendsChatHistories = new HashMap<>();
+		this.friendsChatHistories.put(this.username, new StringBuilder());
 	}
 
 	/**
@@ -142,31 +133,30 @@ public class ClientConnection implements Runnable {
 	 * Processes a message received by the input stream.
 	 * 
 	 * @param message - The message received by the input stream.
-	 * @throws IOException - TODO remove this
 	 */
-	private void processMessage(String[] message) throws IOException {
+	private void processMessage(String[] message) {
 		switch(message[0]) {
 		case "WELCOME":
-			this.friendsChats.get(this.username).append(message[1] + System.lineSeparator());
+			this.friendsChatHistories.get(this.username).append(message[1] + System.lineSeparator());
 			gui.write(message[1]);
 			break;
 		case "ADDFRIEND":
 			System.out.println(message[0] + " " + message[1] + ": " + message[2]);
 			if(message[1].equals("SUCCESS")) {
-				this.friendsChats.put(message[2], new StringBuilder());
-				this.friendsChats.get(message[2]).append(message[0] + " " + message[1] + ": " + message[2] + System.lineSeparator());
+				this.friendsChatHistories.put(message[2], new StringBuilder());
+				this.friendsChatHistories.get(message[2]).append(message[0] + " " + message[1] + ": " + message[2] + System.lineSeparator());
 				gui.addFriendCallback(message[2]);
 			}
 			break;
 		case "REMOVEFRIEND":
 			System.out.println(message[0] + " " + message[1] + ": " + message[2]);
 			if(message[1].equals("SUCCESS")) {
-				this.friendsChats.remove(message[2]);
+				this.friendsChatHistories.remove(message[2]);
 				gui.removeFriendCallback(message[2]);
 			}
 			break;
 		case "MESSAGE":
-			this.friendsChats.get(message[1]).append(message[1] + ": " + message[2] + System.lineSeparator());
+			this.friendsChatHistories.get(message[1]).append(message[1] + ": " + message[2] + System.lineSeparator());
 			if(message[1].equals(selectedFriend)) gui.write(message[1] + ": " + message[2]);
 			break;
 		default:
@@ -216,9 +206,9 @@ public class ClientConnection implements Runnable {
 				String[] reply = IMSProtocol.bytesToMessage(b);
 				if(reply[0].equals("SUCCESS")) {
 					for(int i = 1; i < reply.length; i=i+2) {
-						this.friendsChats.put(reply[i], new StringBuilder(reply[i+1]));
+						this.friendsChatHistories.put(reply[i], new StringBuilder(reply[i+1]));
 					}
-					gui.populateFriendList(reply);
+					gui.initFriends(reply);
 					new Thread(this).start();
 					System.out.println("successfull " + method + " as " + this.username);
 					return true;
@@ -300,7 +290,7 @@ public class ClientConnection implements Runnable {
 		message[2] = msg;
 		byte[] messageBytes = IMSProtocol.messageToBytes(message);
 		
-		this.friendsChats.get(this.selectedFriend).append(this.username + ": " + msg + System.lineSeparator());
+		this.friendsChatHistories.get(this.selectedFriend).append(this.username + ": " + msg + System.lineSeparator());
 		gui.write(this.username + ": " + msg);
 		
 		try {
@@ -329,14 +319,17 @@ public class ClientConnection implements Runnable {
 	
 	/**
 	 * Gets the String representing the chat history for a certain friend.
-	 * <br><br>
-	 * <b>TODO:</b> maybe rename this method.
 	 * 
 	 * @param friend - The name of the friend who;s chat history is requested.
 	 * @return The requested friend's chat history, as a string.
 	 */
-	public String getFriendChat(String friend) {
-		return this.friendsChats.get(friend).toString();
+	public String getFriendChatHistory(String friend) {
+		return this.friendsChatHistories.get(friend).toString();
 	}
+	
+	/*
+	 * Setters
+	 */
+	public void setSelectedFriend(String friend) { this.selectedFriend = friend; }
 
 }
