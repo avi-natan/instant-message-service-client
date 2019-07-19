@@ -209,7 +209,7 @@ public class ClientConnection implements Runnable {
 						this.friendsChatHistories.put(reply[i], new StringBuilder(reply[i+1]));
 					}
 					gui.initFriends(reply);
-					new Thread(this).start();
+					new Thread(this, this.username + "-client").start();
 					System.out.println("successfull " + method + " as " + this.username);
 					return true;
 				} else {

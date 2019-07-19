@@ -202,9 +202,14 @@ public class IMSClient extends JFrame implements WritableGUI {
 			@Override
 			public void keyReleased(KeyEvent e) {
 				if(p1UsernameInput.getText().length() == 0) {
-					p1LogInButton.setEnabled(false);
+					un = false;
 				} else {
+					un = true;
+				}
+				if(un && pw) {
 					p1LogInButton.setEnabled(true);
+				} else {
+					p1LogInButton.setEnabled(false);
 				}
 			}
 		});
@@ -219,6 +224,21 @@ public class IMSClient extends JFrame implements WritableGUI {
 		p1PasswordInput.setBounds(10, 210, 380, 30);
 		panel1.add(p1PasswordInput);
 		p1PasswordInput.setFont(new Font("Tahoma", Font.PLAIN, 16));
+		p1PasswordInput.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyReleased(KeyEvent e) {
+				if(String.valueOf(p1PasswordInput.getPassword()).length() == 0) {
+					pw = false;
+				} else {
+					pw = true;
+				}
+				if(un && pw) {
+					p1LogInButton.setEnabled(true);
+				} else {
+					p1LogInButton.setEnabled(false);
+				}
+			}
+		});
 		
 		p1LogInButton = new JButton("Log In");
 		p1LogInButton.addActionListener(new ActionListener() {
@@ -241,6 +261,10 @@ public class IMSClient extends JFrame implements WritableGUI {
 			 
 		    @Override
 		    public void mouseClicked(MouseEvent e) {
+		    	p1UsernameInput.setText("");
+				p1PasswordInput.setText("");
+				un = em = pw = cpw = false;
+				p1LogInButton.setEnabled(false);
 		        switchPanels(panelNewAccount);
 		    }
 		 
@@ -264,6 +288,10 @@ public class IMSClient extends JFrame implements WritableGUI {
 			 
 		    @Override
 		    public void mouseClicked(MouseEvent e) {
+		    	p1UsernameInput.setText("");
+				p1PasswordInput.setText("");
+				un = em = pw = cpw = false;
+				p1LogInButton.setEnabled(false);
 		        switchPanels(panelForgotPassword);
 		    }
 		 
@@ -428,6 +456,12 @@ public class IMSClient extends JFrame implements WritableGUI {
 			 
 		    @Override
 		    public void mouseClicked(MouseEvent e) {
+		    	p2UsernameInput.setText("");
+				p2EmailInput.setText("");
+				p2PasswordInput.setText("");
+				p2ConfirmPasswordInput.setText("");
+				un = em = pw = cpw = false;
+				p2CreateAccountButton.setEnabled(false);
 		        switchPanels(panelLogIn);
 		    }
 		 
@@ -474,6 +508,21 @@ public class IMSClient extends JFrame implements WritableGUI {
 		p3UsernameInput.setToolTipText("");
 		p3UsernameInput.setFont(new Font("Tahoma", Font.PLAIN, 16));
 		p3UsernameInput.setColumns(10);
+		p3UsernameInput.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyReleased(KeyEvent e) {
+				if(String.valueOf(p3UsernameInput.getText()).length() == 0) {
+					un = false;
+				} else {
+					un = true;
+				}
+				if(un && em) {
+					p3SendMyPassword.setEnabled(true);
+				} else {
+					p3SendMyPassword.setEnabled(false);
+				}
+			}
+		});
 		panel3.add(p3UsernameInput);
 		
 		p3EmailLabel = new JLabel("Email");
@@ -487,11 +536,32 @@ public class IMSClient extends JFrame implements WritableGUI {
 		p3EmailInput.setFont(new Font("Tahoma", Font.PLAIN, 16));
 		p3EmailInput.setColumns(10);
 		p3EmailInput.setBounds(10, 210, 380, 30);
+		p3EmailInput.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyReleased(KeyEvent e) {
+				if(String.valueOf(p3EmailInput.getText()).length() == 0) {
+					em = false;
+				} else {
+					em = true;
+				}
+				if(un && em) {
+					p3SendMyPassword.setEnabled(true);
+				} else {
+					p3SendMyPassword.setEnabled(false);
+				}
+			}
+		});
 		panel3.add(p3EmailInput);
 		
 		p3SendMyPassword = new JButton("Send me my password");
 		p3SendMyPassword.setFont(new Font("Tahoma", Font.PLAIN, 18));
 		p3SendMyPassword.setBounds(10, 418, 380, 50);
+		p3SendMyPassword.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				System.out.println("To implement password recovery");
+			}
+		});
+		p3SendMyPassword.setEnabled(false);
 		panel3.add(p3SendMyPassword);
 		
 		p3BackButton = new JLabel("Back");
@@ -505,6 +575,11 @@ public class IMSClient extends JFrame implements WritableGUI {
 			 
 		    @Override
 		    public void mouseClicked(MouseEvent e) {
+		    	p2UsernameInput.setText("");
+		    	p3UsernameInput.setText("");
+		    	p3EmailInput.setText("");
+				un = em = pw = cpw = false;
+				p3SendMyPassword.setEnabled(false);
 		        switchPanels(panelLogIn);
 		    }
 		 
@@ -663,8 +738,8 @@ public class IMSClient extends JFrame implements WritableGUI {
 	 * by using the {@link ClientConnection#handshake()} method with the
 	 * "REGISTER" IMS protocol keyword.
 	 * 
-	 * If a connection to the server was established, the method switches panels
-	 * to the client panel.
+	 * If a connection to the server was established, the method cleans the create
+	 * new account panel and switches switches panels to the client panel.
 	 * 
 	 * @param username - The registering username. 
 	 * @param email - The registering email.
@@ -679,6 +754,12 @@ public class IMSClient extends JFrame implements WritableGUI {
 			connection = new ClientConnection(this, username, email, password, "localhost", 8877);
 			boolean status = connection.handshake("REGISTER");
 			if(status) {
+				p2UsernameInput.setText("");
+				p2EmailInput.setText("");
+				p2PasswordInput.setText("");
+				p2ConfirmPasswordInput.setText("");
+				un = em = pw = cpw = false;
+				p2CreateAccountButton.setEnabled(false);
 				user_name_display.setText(username);
 				switchPanels(panelClient);
 			}
@@ -694,17 +775,20 @@ public class IMSClient extends JFrame implements WritableGUI {
 	 * a connection to the server by using the {@link ClientConnection#handshake()}
 	 * method with the "LOGIN" IMS protocol keyword.
 	 * 
-	 * If a connection to the server was established, the method switches panels
-	 * to the client panel.
+	 * If a connection to the server was established, the method cleanes the login
+	 * panel and switches switches panels to the client panel.
 	 * 
 	 * @param username - The login username.
 	 * @param password - The login password.
 	 */
 	public void logIn(String username, String password) {
-		p1UsernameInput.setText("");
 		connection = new ClientConnection(this, username, "", password, "localhost", 8877);
 		boolean status = connection.handshake("LOGIN");
 		if(status) {
+			p1UsernameInput.setText("");
+			p1PasswordInput.setText("");
+			un = em = pw = cpw = false;
+			p1LogInButton.setEnabled(false);
 			user_name_display.setText(username);
 			switchPanels(panelClient);
 		}
@@ -727,11 +811,18 @@ public class IMSClient extends JFrame implements WritableGUI {
 	
 	/**
 	 * Terminates the connection associated with this client session by
-	 * calling {@link ClientConnection#terminate} and returns the GUI to
-	 * the login screen.
+	 * calling {@link ClientConnection#terminate}, cleans the client panel
+	 * and returns the GUI to the login screen.
 	 */
 	public void logOut() {
 		connection.terminate();
+		user_name_display.setText("");
+		add_username.setText("");
+		add_button.setEnabled(false);
+		friends_list_model.clear();
+		chat_field.setText("");
+		message_field.setText("");
+		send_button.setEnabled(false);
 		switchPanels(panelLogIn);
 	}
 	
